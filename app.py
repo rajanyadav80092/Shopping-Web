@@ -1,7 +1,7 @@
 from flask import Flask,jsonify,request,render_template,flash,redirect,session
 from models import User
 from extensions import db
-from config import config
+from config import Config
 from backend.auth import v1_auth
 from backend.orders import v1_orders
 from backend.upi import v1_upi
@@ -9,15 +9,15 @@ from flask_migrate import Migrate
 
 app=Flask(__name__)
 
-app.config.from_object(config)
+app.config.from_object(Config)
 app.config["SQLALCHEMY_DATABASE_URI"]="sqlite:///users.db"
 
 
 app.config.update(
     SESSION_COOKIE_SECURE=False,
-    SESSION_COOKIE_HTTONLY=True,
-    SSESSION_COOKIE_SAMESITE="Lax",
-    WTF_CSRF_ENABLES=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    WTF_CSRF_ENABLED=True,
 )
 migrate=Migrate(app,db)
 
