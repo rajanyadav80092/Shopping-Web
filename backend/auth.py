@@ -11,13 +11,34 @@ v1_auth=Blueprint("v1_auth",__name__)
 @v1_auth.route("/signin",methods=["POST"])
 def signin():
     if request.method=="POST":
-        name=request.form.get("name")
-        password=request.form.get("password")
+        name=request.form.get("name").strip().lower()
+        password=request.form.get("password").strip().lower()
         mobile=request.form.get("mobile")
-        email=request.form.get("email")
+        email=request.form.get("email").strip().lower()
         age=request.form.get("age")
         password=generate_password_hash(password)
         is_count=User.query.count()==6
+        user=User.query.filter(or_(email==User.email,mobile==User.mobile)).first()
+        if user:
+            flash("Please use unique email or mobile")
+            return redirect("/signin")
+        if len(name)<4:
+            flash("your name length less tha 5")
+            return redirect("/signin")
+        if len(mobile)<10:
+            flash(f"Invalid mobile number you put : {mobile} ")
+            return redirect("/signin")
+        if len(password)<5:
+            flash("Password is smaller than 8")
+            return redirect("/signin")
+        if int(age)<16:
+            flash("your age is less than 16")
+            return redirect("/signin")
+        # name=name.strip()   #strip return  value andar outer space reduce
+        # email=email.strip()
+        # password=password.strip()
+        # mobile=mobile.strip()
+        
         user=User(name=name,password=password,email=email,mobile=mobile,age=age,role="admin" if is_count else "user")
         db.session.add(user)
         db.session.commit()
