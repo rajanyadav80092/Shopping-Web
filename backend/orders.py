@@ -41,10 +41,13 @@ def orders_post():
 
 @v1_orders.route("/allorder",methods=["GET"])
 def allorder():
+    
     users=Order.query.all()
+    print(users)
     if session["user_role"]=="admin":
         return jsonify([{
-            "order_id":user.id,
+            "total_order_id":user.id,
+            "current_order_id":j+1,
             "order_amount":user.amount,
             "order_product":user.product,
             "user_id":user.user_id,
@@ -56,12 +59,13 @@ def allorder():
             "payment_id":user.payment_id,
             "refund_id":user.refund_id,
             "refund_status":user.refund_status
-            } for user in users])
+            } for j,user in enumerate(users)])
         
     users=Order.query.filter_by(user_id=session["user_id"]).all()
     return jsonify([{
                 "order_id":user.id,
                 "order_amount":user.amount,
+                "current_order_id":j+1,
                 "order_product":user.product,
                 "user_id":user.user_id,
                 "date": user.created_at.strftime("%Y-%m-%d"),
@@ -72,7 +76,8 @@ def allorder():
                 "payment_id":user.payment_id,
                 "refund_id":user.refund_id,
                 "refund_status":user.refund_status
-            } for user in users])
+            } for j,user in enumerate(users)])
+    
 @v1_orders.route("/allorder/<int:user_id>")
 def allorderbyuser(user_id: int):
     if "user_id" not in session:
@@ -81,7 +86,8 @@ def allorderbyuser(user_id: int):
     if session["user_role"]=="admin":
         order=Order.query.filter_by(user_id=user_id).all()
         return jsonify([{
-            "order_id":user.id,
+            "total_order_id":user.id,
+            "current_order_id":j+1,
             "order_amount":user.amount,
             "order_product":user.product,
             "user_id":user.user_id,
@@ -93,6 +99,24 @@ def allorderbyuser(user_id: int):
             "payment_id":user.payment_id,
             "refund_id":user.refund_id,
             "refund_status":user.refund_status
-        }   for user in order])
+        }   for j,user in enumerate(order)])
         
     return redirect(url_for("v1_orders.allorder"))
+
+@v1_orders.route("/return/<int:id>")
+def returnorder(id:int):
+    if "user_id" not in session:
+        flash("first login than return order")
+        return redirect("/login")
+    user_id=session["user_id"]
+    
+    order=Order.query.filter_by(id=id,user_id=user_id).first()
+    if not order:
+        flash("order id not exist")
+        return redirect("/orders")
+    order.refund_id="12343"
+    order.refund_status="successfull"
+    db.session.add(order)
+    db.session.commit()
+    flash("your order return successfully")
+    return redirect("/orders")
