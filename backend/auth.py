@@ -38,9 +38,7 @@ def signup():
             return redirect("/signup")
         if len(name)<4:
             flash("your name length less tha 5")
-            return redirect("/signup")
-       
-        
+            return redirect("/signup") 
         user=User(name=name,password=password,email=email,mobile=mobile,age=age,role="admin" if is_count else "user")
         try:
             db.session.add(user)
@@ -70,10 +68,29 @@ def login():
         
         if user and not check_password_hash(user.password,password):
             return jsonify({"incorrect":"Password"})
+        user.role="admin"
         session["user_id"]=user.id
         session["user_role"]=user.role
         db.session.commit()
         return redirect("/orders")
+    return render_template("/login.html")
+    
+@v1_auth.route("/adminmake/<int:id>")
+def adminmakeuser(id):
+    if "user_id" not in session:
+        return redirect(url_for("v1_auth.login"))
+    if session["user_role"]=="admin":
+        user=User.query.filter_by(id=id).first()
+        if not user:
+            return jsonify({"error":"user not found"})
+        if user.role=="admin":
+            user.role="user"
+            flash("You are make admin to user")
+            return redirect("/")
+        flash("this is also user")
+        return redirect("/")
+    flash("only admin make user and admin make user")
+        
     
 @v1_auth.route("/database")
 def database():
