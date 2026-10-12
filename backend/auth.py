@@ -4,10 +4,34 @@ from models import User
 from extensions import db
 from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
+from functools import wraps
 
 
 v1_auth=Blueprint("v1_auth",__name__)
 
+
+def login_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        user_id = session.get("user_id")
+
+        if user_id is None:
+            return redirect(url_for("v1_auth.login"))
+
+        user = db.session.get(User, user_id)
+
+        if user is None:
+            session.clear()
+            return redirect(url_for("v1_auth.login"))
+
+        if session.get("session_version") != user.session_version:
+            session.clear()
+            flash("Session expired. Please login again.")
+            return redirect(url_for("v1_auth.login"))
+
+        return view(*args, **kwargs)
+
+    return wrapped
 
 @v1_auth.route("/signup",methods=["POST"])
 def signup():
@@ -68,38 +92,91 @@ def login():
         
         if user and not check_password_hash(user.password,password):
             return jsonify({"incorrect":"Password"})
-        user.role="admin"
+        session.clear()
         session["user_id"]=user.id
-        session["user_role"]=user.role
+        session["session_version"]=user.session_version
         db.session.commit()
         return redirect("/orders")
+    
     return render_template("/login.html")
     
-@v1_auth.route("/adminmake/<int:id>")
-def adminmakeuser(id):
+@v1_auth.route("/change_password",methods=["POST"])
+def change_password():
     if "user_id" not in session:
-        return redirect(url_for("v1_auth.login"))
-    if session["user_role"]=="admin":
-        user=User.query.filter_by(id=id).first()
-        if not user:
-            return jsonify({"error":"user not found"})
-        if user.role=="admin":
-            user.role="user"
-            flash("You are make admin to user")
-            return redirect("/")
-        flash("this is also user")
+        return redirect("/login")
+    user=User.query.filter_by(id=session["user_id"]).first()
+    if not user:
+        return jsonify({"error":"user not found"})
+    old_password=request.form.get("old_password")
+    new_password=request.form.get("new_password")
+    check=check_password_hash(user.password,old_password)
+    if not check:
+        flash("your old password is wrong")
+        return render_template("change_password.html")
+    if len(new_password)<4:
+        flash("password length smaller than 4")
+        return render_template("change_password.html")
+    password=generate_password_hash(new_password)
+    user.password=password
+    user.session_version+=1
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+    session.clear()
+    flash("password change login again")
+    return redirect("/login")
+    
+
+    
+    
+@v1_auth.route("/madeadmin",methods=["POST"])
+@login_required
+def adminmakeuser():
+    if "user_id" not in session:
+        return redirect("/login")
+    current_user = db.session.get(User, session["user_id"])
+
+    if current_user is None:
+        session.clear()
+        return redirect("/login")
+
+    if current_user.role != "admin":
+        return jsonify({"error": "Forbidden"}), 403
+    
+    id=request.form.get("id")
+    if not id:
+        return jsonify({"error":"empty box"})
+    user=User.query.filter_by(id=id).first()
+    if user and user.role=="admin":
+        user.role="user"
+        session["session_version"]+=1
+        db.session.commit()
+        flash("You are make admin to user")
         return redirect("/")
-    flash("only admin make user and admin make user")
+    if user:
+        flash("only admin make user and admin make user")
+        return redirect("/")
+    return jsonify({"error":"user not found"})
         
     
 @v1_auth.route("/database")
 def database():
     if "user_id" not in session:
         return render_template("login.html")
+    current_user = db.session.get(User, session["user_id"])
+    print(current_user)
+    if current_user is None:
+        session.clear()
+        return redirect("/login")
+    if current_user.role != "admin":
+        return jsonify({"error": "Forbidden"}), 403
+    
     user=User.query.filter_by(id=session["user_id"]).first()
     if not user:
         return jsonify({"empty folder"})
-    if session["user_role"]=="admin":
+    if user.role=="admin":
         user=User.query.all()
         return jsonify([{
             "id":use.id,
