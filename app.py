@@ -38,15 +38,23 @@ def home():
 def login_page():
     return render_template("/login.html")
 
-@app.route("/signin")
+@app.route("/signup")
 def signin_page():
-    return render_template("/signin.html")
+    return render_template("/signup.html")
 
 @app.route("/orders")
 def orders():
     if "user_id" in session:
         return render_template("/add_order.html")
     return redirect("/login")
+
+@app.route("/changepassword")
+def changepass():
+    return render_template("change_password.html")
+
+@app.route("/makeadmin")
+def makeadmin():
+    return render_template("adminmake.html")
 @app.route("/addbank")
 def addbank():
     return render_template("bank.html")
