@@ -1,6 +1,6 @@
 from flask import Blueprint,url_for,jsonify,render_template,redirect,request,session,flash
 from extensions import db
-from models import Order,Bank
+from models import Order,Bank,User
 
 
 v1_orders=Blueprint("v1_orders",__name__)
@@ -41,10 +41,16 @@ def orders_post():
 
 @v1_orders.route("/allorder",methods=["GET"])
 def allorder():
+    if "user_id" not in session:
+        return "first login"
+    users=User.query.filter_by(id=session["user_id"]).first()
+    if not users:
+        return jsonify({"error":"order not found"})
     
-    users=Order.query.all()
-    print(users)
-    if session["user_role"]=="admin":
+    if users.role=="admin":
+        orders=Order.query.filter_by().all()
+        if not orders:
+            return jsonify({"error":"order not in database"})
         return jsonify([{
             "total_order_id":user.id,
             "current_order_id":j+1,
@@ -59,9 +65,11 @@ def allorder():
             "payment_id":user.payment_id,
             "refund_id":user.refund_id,
             "refund_status":user.refund_status
-            } for j,user in enumerate(users)])
+            } for j,user in enumerate(orders)])
         
-    users=Order.query.filter_by(user_id=session["user_id"]).all()
+    orders=Order.query.filter_by(user_id=session["user_id"]).all()
+    if not orders:
+        return jsonify({"error":"not order"})
     return jsonify([{
                 "order_id":user.id,
                 "order_amount":user.amount,
@@ -76,7 +84,7 @@ def allorder():
                 "payment_id":user.payment_id,
                 "refund_id":user.refund_id,
                 "refund_status":user.refund_status
-            } for j,user in enumerate(users)])
+            } for j,user in enumerate(orders)])
     
 @v1_orders.route("/allorder/<int:user_id>")
 def allorderbyuser(user_id: int):
