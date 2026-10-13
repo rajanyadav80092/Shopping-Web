@@ -107,8 +107,8 @@ def change_password():
     user=User.query.filter_by(id=session["user_id"]).first()
     if not user:
         return jsonify({"error":"user not found"})
-    old_password=request.form.get("old_password")
-    new_password=request.form.get("new_password")
+    old_password=request.form.get("old_password","")
+    new_password=request.form.get("new_password","")
     check=check_password_hash(user.password,old_password)
     if not check:
         flash("your old password is wrong")
@@ -156,7 +156,7 @@ def adminmakeuser():
         flash("You are make admin to user")
         return redirect("/")
     if user:
-        flash("only admin make user and admin make user")
+        flash("only admin make user")
         return redirect("/")
     return jsonify({"error":"user not found"})
         
