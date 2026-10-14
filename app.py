@@ -55,6 +55,15 @@ def changepass():
 @app.route("/makeadmin")
 def makeadmin():
     return render_template("adminmake.html")
+
+@app.route("/settings")
+def setting():
+    return render_template("settings.html")
+
+@app.route("/adminmakeuser")
+def useradmin():
+    return render_template("usermadeadmin.html")
+
 @app.route("/addbank")
 def addbank():
     return render_template("bank.html")
