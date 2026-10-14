@@ -145,7 +145,7 @@ def adminmakeuser():
     if current_user.role != "admin":
         return jsonify({"error": "Forbidden"}), 403
     
-    id=request.form.get("id")
+    id=request.form.get("id","")
     if not id:
         return jsonify({"error":"empty box"})
     user=User.query.filter_by(id=id).first()
@@ -160,16 +160,45 @@ def adminmakeuser():
         return redirect("/")
     return jsonify({"error":"user not found"})
         
+@v1_auth.route("/usermadeadmin",methods=["POST"])
+@login_required
+def adminmadeuser():
+    user=db.session.get(User,session["user_id"])
+    if user is None:
+        flash("your not login")
+        return redirect("/login")
+    if user.role!="admin":
+        flash("ONLY admin make any user to admin")
+        return redirect("/")
+    id=request.form.get("id","")
+    if id=="":
+        flash("Id is requered")
+        return render_template("usermadeadmin.html")
+    user2=User.query.filter_by(id=id).first()
+    if not user2:
+        flash("id is wrong user not found")
+        return redirect("/adminmakeuser")
+    if user2.role=="admin":
+        flash("those user is also admin")
+        return redirect("/")
+    user2.role="admin"
+    user2.session_version+=1
+    db.session.commit()
+    flash(f"{user2.name}  is made admin")
+    return redirect("/")
+    
+    
+
     
 @v1_auth.route("/database")
 def database():
     if "user_id" not in session:
         return render_template("login.html")
     current_user = db.session.get(User, session["user_id"])
-    print(current_user)
     if current_user is None:
         session.clear()
         return redirect("/login")
+    
     if current_user.role != "admin":
         return jsonify({"error": "Forbidden"}), 403
     
