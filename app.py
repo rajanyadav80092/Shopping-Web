@@ -6,6 +6,9 @@ from backend.auth import v1_auth
 from backend.orders import v1_orders
 from backend.upi import v1_upi
 from flask_migrate import Migrate
+from backend.decorator import api_login_required,admin_required
+
+
 
 app=Flask(__name__)
 
@@ -43,28 +46,36 @@ def signin_page():
     return render_template("/signup.html")
 
 @app.route("/orders")
+@api_login_required
 def orders():
     if "user_id" in session:
         return render_template("/add_order.html")
     return redirect("/login")
 
 @app.route("/changepassword")
+@api_login_required
 def changepass():
     return render_template("change_password.html")
 
 @app.route("/makeadmin")
+@api_login_required
+@admin_required
 def makeadmin():
     return render_template("adminmake.html")
 
 @app.route("/settings")
+@api_login_required
 def setting():
     return render_template("settings.html")
 
 @app.route("/adminmakeuser")
+@api_login_required
+@admin_required
 def useradmin():
     return render_template("usermadeadmin.html")
 
 @app.route("/addbank")
+@login_page
 def addbank():
     return render_template("bank.html")
 if __name__ == "__main__":
