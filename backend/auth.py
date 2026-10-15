@@ -75,11 +75,12 @@ def signup():
         return redirect("/login")
     return render_template("/signup.html")
 
+#login karna ho tab
 @v1_auth.route("/login",methods=["POST"])
 def login():
     if request.method=="POST":
-        identifier=request.form.get("identifier").strip().lower()
-        password=request.form.get("password")
+        identifier=request.form.get("identifier","").strip().lower()
+        password=request.form.get("password","")
         user=User.query.filter(or_(
             identifier==User.name,
             identifier==User.email,
@@ -100,6 +101,7 @@ def login():
     
     return render_template("/login.html")
     
+#password change karna ho tb
 @v1_auth.route("/change_password",methods=["POST"])
 def change_password():
     if "user_id" not in session:
@@ -131,6 +133,8 @@ def change_password():
 
     
     
+#admin ko user banana ho tab
+    
 @v1_auth.route("/madeadmin",methods=["POST"])
 @login_required
 def adminmakeuser():
@@ -151,7 +155,7 @@ def adminmakeuser():
     user=User.query.filter_by(id=id).first()
     if user and user.role=="admin":
         user.role="user"
-        session["session_version"]+=1
+        user.session_version+=1
         db.session.commit()
         flash("You are make admin to user")
         return redirect("/")
@@ -159,6 +163,8 @@ def adminmakeuser():
         flash("only admin make user")
         return redirect("/")
     return jsonify({"error":"user not found"})
+
+#user ko admin banana ho 
         
 @v1_auth.route("/usermadeadmin",methods=["POST"])
 @login_required
@@ -204,7 +210,7 @@ def database():
     
     user=User.query.filter_by(id=session["user_id"]).first()
     if not user:
-        return jsonify({"empty folder"})
+        return jsonify({"error":"empty folder"})
     if user.role=="admin":
         user=User.query.all()
         return jsonify([{
