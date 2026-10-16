@@ -21,8 +21,10 @@ class User(db.Model):
 class Order(db.Model):
     id=db.Column(db.Integer,primary_key=True)
     product=db.Column(db.String,nullable=False)
-    amount=db.Column(db.Integer,nullable=False)
+    unit_amount=db.Column(db.Integer,nullable=False)
+    total_amount=db.Column(db.Integer,nullable=False)
     user_id=db.Column(db.Integer,db.ForeignKey("user.id"),nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey("product.id"), nullable=False, index=True)
     quatity=db.Column(db.Integer,nullable=False)
     created_at = db.Column(db.DateTime,nullable=False,default=lambda: datetime.now(ZoneInfo("Asia/Kolkata")))
     payment_method=db.Column(db.String(20),nullable=False,default="none")
@@ -30,6 +32,7 @@ class Order(db.Model):
     payment_id=db.Column(db.String(255),nullable=True,default="none")
     refund_status=db.Column(db.String(20),default="None",nullable=False)
     refund_id=db.Column(db.String(255),nullable=True,default="none")
+
     
 
 class Bank(db.Model):
@@ -46,7 +49,8 @@ class Product(db.Model):
     id=db.Column(db.Integer,primary_key=True)
     product=db.Column(db.String(150),nullable=False)
     exact_amount=db.Column(db.Integer,nullable=False)
-    stock=db.Column(db.Integer,nullable=False)
+    stock=db.Column(db.Integer,nullable=False,default=0)
     discount_percentage=db.Column(db.Integer,nullable=False)
-    user_id=db.Column(db.Integer,db.ForeignKey("user.id"),nullable=False)
-    
+    created_at = db.Column(db.DateTime, nullable=False,default=lambda: datetime.now(ZoneInfo("Asia/Kolkata")))
+    owner_id=db.Column(db.Integer,db.ForeignKey("user.id"),nullable=False)
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
