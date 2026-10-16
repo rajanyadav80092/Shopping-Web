@@ -7,6 +7,7 @@ from backend.orders import v1_orders
 from backend.upi import v1_upi
 from flask_migrate import Migrate
 from backend.decorator import api_login_required,admin_required
+from backend.pagination_route import v1_lists
 
 
 
@@ -32,6 +33,7 @@ with app.app_context():
 app.register_blueprint(v1_auth,url_prefix="/backend")
 app.register_blueprint(v1_orders,url_prefix="/backend")
 app.register_blueprint(v1_upi,url_prefix="/backend")
+app.register_blueprint(v1_lists,url_prefix="/backend")
 
 @app.route("/")
 def home():
@@ -75,7 +77,7 @@ def useradmin():
     return render_template("usermadeadmin.html")
 
 @app.route("/addbank")
-@login_page
+@api_login_required
 def addbank():
     return render_template("bank.html")
 if __name__ == "__main__":
