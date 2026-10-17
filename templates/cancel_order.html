@@ -1,0 +1,9 @@
+{% extends 'home.html' %}
+{% block content %}
+<div class="glash-div">
+<form action="/backend/return" method="POST">
+    <input class="glash-input" type="number" name="id" placeholder="Enter order id" required>
+    <button class="glash-btn" type="submit">Submit</button>
+</form>
+</div>
+{% endblock %}
