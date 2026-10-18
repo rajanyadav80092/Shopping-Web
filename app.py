@@ -23,12 +23,13 @@ app.config.update(
     SESSION_COOKIE_SAMESITE="Lax",
     WTF_CSRF_ENABLED=True,
 )
-migrate=Migrate(app,db)
+# migrate=Migrate(app,db)
+migrate = Migrate(app, db, render_as_batch=True)
 
 db.init_app(app)
 
-with app.app_context():
-    db.create_all()
+# with app.app_context():
+#     db.create_all()
 
 app.register_blueprint(v1_auth,url_prefix="/backend")
 app.register_blueprint(v1_orders,url_prefix="/backend")
@@ -75,6 +76,16 @@ def setting():
 @admin_required
 def useradmin():
     return render_template("usermadeadmin.html")
+
+@app.route("/cancel")
+@api_login_required
+def cancel_order():
+    return render_template("cancel_order.html")
+
+@app.route("/settings")
+@api_login_required
+def allsetting():
+    return render_template("settings.html")
 
 @app.route("/addbank")
 @api_login_required
