@@ -5,6 +5,7 @@ from extensions import db
 from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 from functools import wraps
+from backend.decorator import api_login_required,admin_required
 
 
 v1_auth=Blueprint("v1_auth",__name__)
@@ -43,7 +44,7 @@ def signup():
         if not mobile.isdigit() or len(mobile) != 10:
             flash("check mobile number")
             return redirect("/signup")
-        if len(password)<8:
+        if len(password)<4:
             flash("Password is smaller than 8")
             return redirect("/signup")
         try:
@@ -197,6 +198,7 @@ def adminmadeuser():
 
     
 @v1_auth.route("/database")
+@api_login_required
 def database():
     if "user_id" not in session:
         return render_template("login.html")
@@ -205,8 +207,8 @@ def database():
         session.clear()
         return redirect("/login")
     
-    if current_user.role != "admin":
-        return jsonify({"error": "Forbidden"}), 403
+    # if current_user.role != "admin":
+    #     return jsonify({"error": "Forbidden"}), 403
     
     user=User.query.filter_by(id=session["user_id"]).first()
     if not user:
