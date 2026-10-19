@@ -104,6 +104,7 @@ def login():
     
 #password change karna ho tb
 @v1_auth.route("/change_password",methods=["POST"])
+@api_login_required
 def change_password():
     if "user_id" not in session:
         return redirect("/login")
@@ -137,7 +138,7 @@ def change_password():
 #admin ko user banana ho tab
     
 @v1_auth.route("/madeadmin",methods=["POST"])
-@login_required
+@api_login_required
 def adminmakeuser():
     if "user_id" not in session:
         return redirect("/login")
@@ -168,7 +169,7 @@ def adminmakeuser():
 #user ko admin banana ho 
         
 @v1_auth.route("/usermadeadmin",methods=["POST"])
-@login_required
+@api_login_required
 def adminmadeuser():
     user=db.session.get(User,session["user_id"])
     if user is None:
@@ -232,6 +233,7 @@ def database():
     }])
     
 @v1_auth.route("/logout")
+@api_login_required
 def logout():
     if "user_id" in session:
         session.clear()
