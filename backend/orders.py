@@ -1,7 +1,7 @@
 from flask import Blueprint,url_for,jsonify,render_template,redirect,request,session,flash
 from extensions import db
 from models import Order,Bank,User
-
+from backend.decorator import api_login_required,admin_required
 
 v1_orders=Blueprint("v1_orders",__name__)
 
@@ -13,27 +13,44 @@ def orders_post():
     
     if request.method=="POST":
         product=request.form.get("product","").strip().lower()
-        amount=request.form.get("amount","").strip().lower()
+        amount=float(request.form.get("amount"))
+        quantity=int(request.form.get("quantity",1))
+        print("quantity",type(amount))
+        if quantity<=0:
+            return jsonify({"error":"your quantity invalid"})
         payment_method=request.form.get("payment_method","").strip().lower()
-        print(payment_method)
+        total_amount=amount*quantity
+        if not total_amount:
+            return jsonify({"error":"total amount is None"})
         if payment_method=="cod":
-            order=Order(amount=amount,product=product,user_id=session["user_id"],payment_method=payment_method)
-            db.session.add(order)
-            db.session.commit()
-            flash("your order add successfully")
-            return redirect(url_for("v1_orders.allorder"))
+            order=Order(amount=amount,product=product,user_id=session["user_id"],payment_method=payment_method,total_amount=total_amount,quantity=quantity,product_id=1)
+            try:
+                db.session.add(order)
+                db.session.commit()
+                return redirect("/orders")
+            except Exception:
+                db.session.rollback()
+                raise
         else:
+            total_amount=amount*quantity
             order=Order(product=product,
                         amount=amount,
                         user_id=session["user_id"],
                         payment_method="upi",
                         payment_id="12345",
-                        payment_status="complete"
+                        payment_status="complete",
+                        total_amount=total_amount,
+                        product_id=1,
+                        quantity=quantity
                     )
-            db.session.add(order)
-            db.session.commit()
-            flash("your order booked")
-            return redirect("/orders")
+            try:
+                db.session.add(order)
+                db.session.commit()
+                return redirect("/orders")
+            except Exception:
+                db.session.rollback()
+                raise
+            
             
             
     
@@ -63,8 +80,9 @@ def allorder():
             "payment_method":user.payment_method,
             "payment_status":user.payment_status,
             "payment_id":user.payment_id,
-            "refund_id":user.refund_id,
-            "refund_status":user.refund_status
+            "refund_status":user.refund_status,
+            "total_amount":user.total_amount,
+            "refund_id":user.refund_id
             } for j,user in enumerate(orders)])
         
     orders=Order.query.filter_by(user_id=session["user_id"]).all()
@@ -82,11 +100,14 @@ def allorder():
                 "payment_method":user.payment_method,
                 "payment_status":user.payment_status,
                 "payment_id":user.payment_id,
+                "refund_status":user.refund_status,
+                "total_amount":user.total_amount,
                 "refund_id":user.refund_id,
-                "refund_status":user.refund_status
+                "quantity":user.quantity
             } for j,user in enumerate(orders)])
     
 @v1_orders.route("/allorder/<int:user_id>")
+@api_login_required
 def allorderbyuser(user_id: int):
     if "user_id" not in session:
         flash("first Login")
@@ -111,12 +132,16 @@ def allorderbyuser(user_id: int):
         
     return redirect(url_for("v1_orders.allorder"))
 
-@v1_orders.route("/return/<int:id>")
-def returnorder(id:int):
+@v1_orders.route("/return",methods=["POST"])
+@api_login_required
+def returnorder():
     if "user_id" not in session:
         flash("first login than return order")
         return redirect("/login")
     user_id=session["user_id"]
+    id=request.form.get("id")
+    if not id:
+        return redirect("/cancel")
     
     order=Order.query.filter_by(id=id,user_id=user_id).first()
     if not order:
