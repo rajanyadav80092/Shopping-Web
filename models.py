@@ -14,24 +14,25 @@ class User(db.Model):
     role=db.Column(db.String(20),nullable=False,default="user")
     orders=db.relationship("Order",backref="user",lazy=True)
     banks=db.relationship("Bank",backref="user",lazy=True)
-    product=db.relationship("Product",backref="user",lazy=True)
+    products=db.relationship("Product",backref="user",lazy=True)
     
     
 
 class Order(db.Model):
     id=db.Column(db.Integer,primary_key=True)
     product=db.Column(db.String,nullable=False)
-    unit_amount=db.Column(db.Integer,nullable=False)
-    total_amount=db.Column(db.Integer,nullable=False)
+    amount=db.Column(db.Integer,nullable=False)
+    total_amount=db.Column(db.Integer,nullable=False,default=0)
     user_id=db.Column(db.Integer,db.ForeignKey("user.id"),nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey("product.id"), nullable=False, index=True)
-    quatity=db.Column(db.Integer,nullable=False)
+    quantity=db.Column(db.Integer,nullable=False,default=1)
     created_at = db.Column(db.DateTime,nullable=False,default=lambda: datetime.now(ZoneInfo("Asia/Kolkata")))
+    status = db.Column(db.String(20), nullable=False, default="placed", server_default="placed")
     payment_method=db.Column(db.String(20),nullable=False,default="none")
     payment_status=db.Column(db.String(20),default="Pending",nullable=False)
     payment_id=db.Column(db.String(255),nullable=True,default="none")
     refund_status=db.Column(db.String(20),default="None",nullable=False)
-    refund_id=db.Column(db.String(255),nullable=True,default="none")
+    refund_id=db.Column(db.String(30),default="None",nullable=True)
 
     
 
@@ -50,7 +51,7 @@ class Product(db.Model):
     product=db.Column(db.String(150),nullable=False)
     exact_amount=db.Column(db.Integer,nullable=False)
     stock=db.Column(db.Integer,nullable=False,default=0)
-    discount_percentage=db.Column(db.Integer,nullable=False)
+    discount_percentage=db.Column(db.Integer,nullable=False,default=0)
     created_at = db.Column(db.DateTime, nullable=False,default=lambda: datetime.now(ZoneInfo("Asia/Kolkata")))
     owner_id=db.Column(db.Integer,db.ForeignKey("user.id"),nullable=False)
     is_active = db.Column(db.Boolean, nullable=False, default=True)
