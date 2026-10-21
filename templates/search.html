@@ -1,0 +1,8 @@
+{% extends 'home.html' %}
+{% block content %}
+<div class="glash-div">
+    <form action="/backend/search_items" method="post">
+        <input class="glash-input" type="text" name="product" placeholder="Search Product" required ><br><br>
+        <button type="submit" class="glash-btn">Submit</button><br>
+</div>
+{% endblock %}
