@@ -1,4 +1,4 @@
-from flask import Flask,jsonify,request,render_template,flash,redirect,session
+from flask import Flask,jsonify,request,render_template,flash,redirect,session,send_from_directory
 from models import User
 from extensions import db
 from config import Config
@@ -8,10 +8,31 @@ from backend.upi import v1_upi
 from flask_migrate import Migrate
 from backend.decorator import api_login_required,admin_required
 from backend.pagination_route import v1_lists
-
+import os
+from jinja2 import ChoiceLoader, FileSystemLoader
 
 
 app=Flask(__name__)
+
+# Amazon submodule ke HTML templates load karne ke liye
+app.jinja_loader = ChoiceLoader([
+    app.jinja_loader,
+    FileSystemLoader(os.path.join(app.root_path, "amazon-ui"))
+])
+
+# Amazon ki CSS, JS aur images serve karne ke liye
+@app.route("/amazon-assets/<path:filename>")
+def amazon_assets(filename):
+    return send_from_directory(
+        os.path.join(app.root_path, "amazon-ui"),
+        filename
+    )
+
+# Amazon page
+@app.route("/amazon")
+def amazon_home():
+    return render_template("index.html")
+
 
 app.config.from_object(Config)
 app.config["SQLALCHEMY_DATABASE_URI"]="sqlite:///users.db"
@@ -38,7 +59,7 @@ app.register_blueprint(v1_lists,url_prefix="/backend")
 
 @app.route("/")
 def home():
-    return render_template("/home.html")
+    return redirect("/amazon")
 
 @app.route("/login")
 def login_page():
@@ -91,6 +112,13 @@ def allsetting():
 @api_login_required
 def addbank():
     return render_template("bank.html")
+
+@app.route("/search")
+@api_login_required
+def search_i():
+    return render_template("search.html")
+
+
 if __name__ == "__main__":
     app.run(debug=True)
     
