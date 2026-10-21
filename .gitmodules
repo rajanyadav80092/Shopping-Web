@@ -1,0 +1,3 @@
+[submodule "amazon-ui"]
+	path = amazon-ui
+	url = https://github.com/rajanyadav80092/Amazon.git
