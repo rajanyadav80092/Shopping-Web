@@ -20,6 +20,7 @@ app.jinja_loader = ChoiceLoader([
     FileSystemLoader(os.path.join(app.root_path, "amazon-ui"))
 ])
 
+
 # Amazon ki CSS, JS aur images serve karne ke liye
 @app.route("/amazon-assets/<path:filename>")
 def amazon_assets(filename):
@@ -29,9 +30,9 @@ def amazon_assets(filename):
     )
 
 # Amazon page
-@app.route("/amazon")
-def amazon_home():
-    return render_template("index.html")
+# @app.route("/")
+# def amazon_home():
+#     return render_template("index.html")
 
 
 app.config.from_object(Config)
@@ -59,7 +60,7 @@ app.register_blueprint(v1_lists,url_prefix="/backend")
 
 @app.route("/")
 def home():
-    return redirect("/amazon")
+    return render_template("index.html")
 
 @app.route("/login")
 def login_page():
@@ -103,10 +104,6 @@ def useradmin():
 def cancel_order():
     return render_template("cancel_order.html")
 
-@app.route("/settings")
-@api_login_required
-def allsetting():
-    return render_template("settings.html")
 
 @app.route("/addbank")
 @api_login_required
